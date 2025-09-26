@@ -1,4 +1,4 @@
 const logout = () => {
     localStorage.clear();
-    window.location.href = "./testingLogin.html";
+    window.location.href = "./index.html";
 }
