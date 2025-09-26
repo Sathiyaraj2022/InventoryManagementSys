@@ -1,11 +1,225 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-  <title>A Meaningful Page Title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Screen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom styles for error messages */
+        .error-message {
+            color: #ef4444;
+            /* Tailwind's red-500 */
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+    </style>
 </head>
-<body>
 
-<h1> Github hosting First File</h1>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
+    <div class="w-full max-w-sm bg-white rounded-lg shadow-xl p-8">
+
+        <div id="loginContainer">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Login</h2>
+
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <div class="relative">
+                        <i data-lucide="user"
+                            class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                        <input type="text" id="username" name="username" placeholder="Enter your username"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <p id="usernameError" class="error-message"></p>
+                </div>
+
+                <div class="mb-6">
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock"
+                            class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                        <input type="password" id="password" name="password" placeholder="Enter your password"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <p id="passwordError" class="error-message"></p>
+                </div>
+
+                <p id="comparisonError" class="error-message mb-4 text-center"></p>
+
+                <button type="submit"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center justify-center">
+                    <i data-lucide="log-in" class="w-5 h-5 mr-2"></i>
+                    Log In
+                </button>
+            </form>
+        </div>
+
+        <div id="welcomeContainer" class="hidden text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome, <span id="welcomeUser"
+                    class="text-indigo-600">User</span>!</h2>
+            <p class="text-gray-600 mb-6">You are successfully logged in.</p>
+
+            <button id="logoutButton"
+                class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center justify-center">
+                <i data-lucide="log-out" class="w-5 h-5 mr-2"></i>
+                Log Out
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Calls the Lucide function to render the icons
+        lucide.createIcons();
+
+        const loginForm = document.getElementById('loginForm');
+        const loginContainer = document.getElementById('loginContainer');
+        const welcomeContainer = document.getElementById('welcomeContainer');
+        const logoutButton = document.getElementById('logoutButton');
+        const welcomeUser = document.getElementById('welcomeUser');
+
+        // --- Helper Function to Toggle View ---
+        function toggleView(isLoggedIn, username = '') {
+            if (isLoggedIn) {
+                // Show welcome screen
+                loginContainer.classList.add('hidden');
+                welcomeContainer.classList.remove('hidden');
+                welcomeUser.textContent = username; // Display the logged-in user
+            } else {
+                // Show login screen
+                loginContainer.classList.remove('hidden');
+                welcomeContainer.classList.add('hidden');
+            }
+        }
+
+        // --- Check Session on Load ---
+        function checkSession() {
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser) {
+                // If user data exists in local storage, go straight to welcome view
+                const user = JSON.parse(storedUser);
+                window.location.href = "./dashboard.html";
+                // toggleView(true, user.username);
+            } else {
+                // Otherwise, show the login view
+                toggleView(false);
+            }
+        }
+
+        // --- Login Form Submission Handler ---
+        loginForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const usernameError = document.getElementById('usernameError');
+            const passwordError = document.getElementById('passwordError');
+            const comparisonError = document.getElementById('comparisonError');
+
+            // Reset previous messages and styling
+            let isValid = true;
+            const errorElements = [usernameError, passwordError, comparisonError];
+            errorElements.forEach(el => el.style.display = 'none');
+            usernameInput.classList.remove('border-red-500');
+            passwordInput.classList.remove('border-red-500');
+
+            // Get trimmed values
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            // --- 1. Basic Validation ---
+
+            if (username === '') {
+                isValid = false;
+                usernameError.textContent = 'Username is required.';
+                usernameError.style.display = 'block';
+                usernameInput.classList.add('border-red-500');
+            } else if (username.length < 3) {
+                isValid = false;
+                usernameError.textContent = 'Username must be at least 3 characters.';
+                usernameError.style.display = 'block';
+                usernameInput.classList.add('border-red-500');
+            } else if (username !== 'Client') {
+                isValid = false;
+                usernameError.textContent = 'Username is invalid!';
+                usernameError.style.display = 'block';
+                usernameInput.classList.add('border-red-500');
+            }
+
+
+
+            if (password === '') {
+                isValid = false;
+                passwordError.textContent = 'Password is required.';
+                passwordError.style.display = 'block';
+                passwordInput.classList.add('border-red-500');
+            } else if (password.length < 6) {
+                isValid = false;
+                passwordError.textContent = 'Password must be at least 6 characters.';
+                passwordError.style.display = 'block';
+                passwordInput.classList.add('border-red-500');
+            }
+            else if (password !== 'Client@123') {
+                isValid = false;
+                passwordError.textContent = 'Password is wrong.';
+                passwordError.style.display = 'block';
+                passwordInput.classList.add('border-red-500');
+            }
+
+            // --- 2. Comparison Validation (NEW) ---
+            // Username and Password cannot be the same
+            if (isValid && username === password) {
+                isValid = false;
+                comparisonError.textContent = 'Username and Password cannot be the same for security.';
+                comparisonError.style.display = 'block';
+                usernameInput.classList.add('border-red-500');
+                passwordInput.classList.add('border-red-500');
+            }
+
+            // --- 3. Submission / Local Storage (NEW) ---
+            if (isValid) {
+                // In a real application, you'd verify credentials against a server here.
+
+                // Faking a successful login and storing user data
+                const userData = {
+                    username: username,
+                    loginTime: new Date().toISOString()
+                };
+
+                // Store user data in Local Storage
+                localStorage.setItem('currentUser', JSON.stringify(userData));
+                console.log('User data stored in Local Storage:', userData);
+
+                // Switch to the welcome view
+                // toggleView(true, username);
+                window.location.href = "./dashboard.html";
+
+                // Clear the form fields
+                loginForm.reset();
+
+            } else {
+                console.log('Validation failed.');
+            }
+        });
+
+        // --- Logout Button Handler (NEW) ---
+        logoutButton.addEventListener('click', function () {
+            // Clear all values from Local Storage
+            localStorage.clear();
+            console.log('Local Storage cleared. User logged out.');
+
+            // Switch back to the login view
+            toggleView(false);
+        });
+
+        // Initial check when the page loads
+        checkSession();
+    </script>
 </body>
+
 </html>
